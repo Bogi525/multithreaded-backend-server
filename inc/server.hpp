@@ -2,11 +2,9 @@
 
 #include <iostream>
 
-using namespace std;
-
 class Server {
 public:
-    void funct();
+    void establish_connection();
 private:
     int a = 5;
 };
