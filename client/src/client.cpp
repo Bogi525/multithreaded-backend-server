@@ -7,7 +7,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-void Client::send_message(std::string s) {
+void Client::send_message() {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (server_fd < 0) {
@@ -48,7 +48,7 @@ void Client::send_message(std::string s) {
 
 int main() {
     Client client;
-    client.send_message("123 45");
+    client.send_message();
     std::cin;
     return 0;
 }

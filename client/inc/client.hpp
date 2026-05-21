@@ -4,6 +4,6 @@
 
 class Client {
 public:
-    void send_message(std::string s);
+    void send_message();
 private:
 };
