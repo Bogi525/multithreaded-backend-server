@@ -4,6 +4,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <thread>
+#include <algorithm>
 
 int Server::setup_socket() {
     server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
@@ -15,6 +17,7 @@ int Server::setup_socket() {
 
     return 0;
 }
+
 int Server::bind_socket() {
     struct sockaddr_in server_addr{};
     server_addr.sin_family = AF_INET;
@@ -35,6 +38,7 @@ int Server::bind_socket() {
 
     return 0;
 }
+
 int Server::start_listening() {
     if (listen(server_fd_, 5) < 0) {
         std::cerr << "Listen failed.\n";
@@ -46,12 +50,17 @@ int Server::start_listening() {
 
     return 0;
 }
-int Server::accept_clients() {
+
+void Server::accept_clients() {
     while(true) {
         sockaddr_in client_addr;
         socklen_t client_len = sizeof(client_addr);
         
-        int client_fd = accept(server_fd_, (sockaddr*)&client_addr, &client_len);
+        int client_fd = accept(
+            server_fd_,
+            (sockaddr*)&client_addr,
+            &client_len
+        );
 
         if (client_fd < 0) {
             std::cerr << "Accept failed.\n";
@@ -60,13 +69,32 @@ int Server::accept_clients() {
 
         std::cout << "Client connected.\n";
 
-        auto session = std::make_unique<ClientSession>(client_fd);
+        auto session = std::make_shared<ClientSession>(client_fd);
 
-        session->handle();
+        {
+            std::lock_guard<std::mutex> lock(sessions_mutex_);
+            client_sessions_.push_back(session);
+        }
 
-        client_sessions_.push_back(std::move(session));
+        std::thread([this, session]() {
+            session->handle();
+
+            remove_session(session);
+        }).detach();
     }
-    
+}
+
+void Server::remove_session(std::shared_ptr<ClientSession> session) {
+    std::lock_guard<std::mutex> lock(sessions_mutex_);
+
+    client_sessions_.erase(
+        std::remove(
+            client_sessions_.begin(),
+            client_sessions_.end(),
+            session
+        ),
+        client_sessions_.end()
+    );
 }
 
 void Server::start() {

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <mutex>
 
 #include "client_session.hpp"
 
@@ -12,10 +13,13 @@ private:
     int setup_socket();
     int bind_socket();
     int start_listening();
-    int accept_clients();
+    void accept_clients();
+
+    void remove_session(std::shared_ptr<ClientSession> session);
 
     int server_fd_;
     int port_;
 
-    std::vector<std::unique_ptr<ClientSession>> client_sessions_;
+    std::vector<std::shared_ptr<ClientSession>> client_sessions_;
+    std::mutex sessions_mutex_;
 };
