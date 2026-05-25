@@ -10,6 +10,7 @@ class TaskQueue {
 public:
     void push_task(std::function<void()> task);
     std::function<void()> wait_and_pop();
+    void stop();
 private:
     std::queue<std::function<void()>> tasks_;
 
