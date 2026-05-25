@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _client_session_hpp_
+#define _client_session_hpp_
 
 class ClientSession {
 public:
@@ -8,3 +9,5 @@ public:
 private:
     int client_fd_;
 };
+
+#endif

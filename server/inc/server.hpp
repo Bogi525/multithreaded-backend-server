@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _server_hpp_
+#define _server_hpp_
 
 #include <vector>
 #include <memory>
@@ -23,3 +24,5 @@ private:
     std::vector<std::shared_ptr<ClientSession>> client_sessions_;
     std::mutex sessions_mutex_;
 };
+
+#endif
