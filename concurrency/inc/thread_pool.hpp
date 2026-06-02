@@ -6,13 +6,14 @@
 
 class ThreadPool {
 public:
+    static int current_worker_id();
+
     ThreadPool(size_t thread_count);
     ~ThreadPool(); // Rule 3/5 !
 
     void enqueue(std::function<void()> task);
-
 private:
-    std::vector<std::thread> workers_;
+    std::vector<std::thread> worker_threads_;
     TaskQueue task_queue_;
 };
 
