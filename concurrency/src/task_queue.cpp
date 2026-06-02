@@ -2,7 +2,7 @@
 
 void TaskQueue::push_task(std::function<void()> task) {
     std::lock_guard<std::mutex> lock(mutex_);
-    tasks_.push(task);
+    tasks_.push(std::move(task));
 
     cv_.notify_one();
 }
