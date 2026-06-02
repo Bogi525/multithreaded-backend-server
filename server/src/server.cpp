@@ -1,4 +1,5 @@
 #include "../inc/server.hpp"
+#include "../../concurrency/inc/thread_pool.hpp"
 
 #include <iostream>
 #include <sys/socket.h>
@@ -116,8 +117,25 @@ void Server::start() {
 }
 
 int main() {
-    Server srv;
-    srv.start();
-    std::cin;
-    return 0;
+    if (false) {
+        Server srv;
+        srv.start();
+        std::cin;
+        return 0;
+    }
+    
+    ThreadPool pool(4);
+    
+    for (int i = 0; i < 20; i++) {
+        pool.enqueue([i] () {
+            sleep(1);
+            std::cout << "Task "
+                << i
+                <<" on thread "
+                << std::this_thread::get_id()
+                << " (Worker "
+                << ThreadPool::current_worker_id()
+                << ")\n";
+        });
+    }
 }
