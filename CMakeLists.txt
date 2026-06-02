@@ -12,10 +12,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(server
     server/src/server.cpp
     server/src/client_session.cpp
+    concurrency/src/task_queue.cpp
+    concurrency/src/thread_pool.cpp
 )
 
 target_include_directories(server PRIVATE
     server/inc
+    concurrency/inc
 )
 
 # =========================
