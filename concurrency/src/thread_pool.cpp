@@ -20,7 +20,21 @@ ThreadPool::ThreadPool(size_t thread_count) {
 
                 if (!task) break;
 
-                task();
+                try {
+                    task();
+                } catch (std::exception e) {
+                    std::cerr
+                        << "Worker "
+                        << current_worker_id()
+                        << " caught exception: "
+                        << e.what()
+                        << '\n';
+                } catch (...) {
+                    std::cerr
+                        << "Worker "
+                        << current_worker_id()
+                        << " caught unknown exception\n";
+                }
             }
 
             std::cout << "Worker " << i << " exiting\n";
