@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-thread_local int worker_id = -1;
+thread_local int ThreadPool::worker_id = -1;
 
 int ThreadPool::current_worker_id() {
     return worker_id;

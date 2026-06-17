@@ -15,6 +15,8 @@ public:
 private:
     std::vector<std::thread> worker_threads_;
     TaskQueue task_queue_;
+
+    static thread_local int worker_id;
 };
 
 #endif
