@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include "../../concurrency/inc/thread_pool.hpp"
 
 #include "client_session.hpp"
 
@@ -23,6 +24,8 @@ private:
 
     std::vector<std::shared_ptr<ClientSession>> client_sessions_;
     std::mutex sessions_mutex_;
+
+    ThreadPool thread_pool_ = ThreadPool(4);
 };
 
 #endif

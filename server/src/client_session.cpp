@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <cstring>
 #include <unistd.h>
+#include "../../concurrency/inc/thread_pool.hpp"
 
 ClientSession::ClientSession(int client_fd) : client_fd_(client_fd) {}
 
@@ -15,7 +16,8 @@ void ClientSession::handle() {
     ssize_t bytes_received = recv(client_fd_, buffer, sizeof(buffer), 0);
 
     if (bytes_received > 0) {
-        std::cout << "Message received: \"" << buffer << "\"\n";
+        
+        std::cout << ThreadPool::current_worker_id() << " received: \"" << buffer << "\"\n";
 
         send(client_fd_, buffer, bytes_received, 0);
     }

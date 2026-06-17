@@ -77,11 +77,11 @@ void Server::accept_clients() {
             client_sessions_.push_back(session);
         }
 
-        std::thread([this, session]() {
+        thread_pool_.enqueue([this, session]() {
             session->handle();
 
             remove_session(session);
-        }).detach();
+        });
     }
 }
 
@@ -117,25 +117,8 @@ void Server::start() {
 }
 
 int main() {
-    if (false) {
-        Server srv;
-        srv.start();
-        std::cin;
-        return 0;
-    }
-    
-    ThreadPool pool(4);
-    
-    for (int i = 0; i < 20; i++) {
-        pool.enqueue([i] () {
-            sleep(1);
-            std::cout << "Task "
-                << i
-                <<" on thread "
-                << std::this_thread::get_id()
-                << " (Worker "
-                << ThreadPool::current_worker_id()
-                << ")\n";
-        });
-    }
+    Server server;
+    server.start();
+    std::cin;
+    return 0;
 }
