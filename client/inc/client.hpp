@@ -4,6 +4,6 @@
 
 class Client {
 public:
-    void send_message();
+    void send_message(int i);
 private:
 };

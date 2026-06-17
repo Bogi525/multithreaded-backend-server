@@ -6,8 +6,20 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <thread>
+#include <vector>
+#include <random>
+#include <chrono>
 
-void Client::send_message() {
+void Client::send_message(int i) {
+    static thread_local std::mt19937 rng(std::random_device{}());
+
+    std::uniform_int_distribution<int> dist(1, 1000);
+
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(dist(rng))
+    );
+
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (server_fd < 0) {
@@ -29,7 +41,7 @@ void Client::send_message() {
         return;
     }
 
-    std::string msg = "Hello from client!";
+    std::string msg = "Hello from client " + std::to_string(i) + '!';
 
     send(server_fd, msg.c_str(), strlen(msg.c_str()), 0);
 
@@ -47,8 +59,19 @@ void Client::send_message() {
 }
 
 int main() {
-    Client client;
-    client.send_message();
-    std::cin;
+    std::vector<std::thread> threads;
+
+
+    for (int i = 0; i < 100; i++) {
+        threads.emplace_back([i] () {
+            Client client;
+            client.send_message(i);
+        });
+    }
+
+    for (auto& t : threads) {
+        t.join();
+    }
+
     return 0;
 }
