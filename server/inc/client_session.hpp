@@ -5,9 +5,19 @@ class ClientSession {
 public:
     ClientSession(int client_fd);
 
-    void handle();
+    bool handle_read();
+    bool handle_write();
+
+    void close_session();
 private:
     int client_fd_;
+
+    std::string read_buffer_;
+    std::string write_buffer_;
+
+    bool closed_;
+
+    void queue_response(std::string data);
 };
 
 #endif
