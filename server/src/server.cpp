@@ -1,5 +1,6 @@
 #include "../inc/server.hpp"
 #include "../../concurrency/inc/thread_pool.hpp"
+#include "../../logging/inc/logger.hpp"
 
 #include <iostream>
 #include <sys/socket.h>
@@ -47,7 +48,7 @@ int Server::start_listening() {
         return -1;
     }
 
-    std::cout << "Server listening on port 8080...\n";
+    Logger::info("Server listening on port 8080...");
 
     return 0;
 }
@@ -64,11 +65,11 @@ void Server::accept_clients() {
         );
 
         if (client_fd < 0) {
-            std::cerr << "Accept failed.\n";
+            Logger::error("Accept failed.");
             continue;
         }
 
-        std::cout << "Client connected.\n";
+        Logger::info("Client connected.");
 
         auto session = std::make_shared<ClientSession>(client_fd);
 

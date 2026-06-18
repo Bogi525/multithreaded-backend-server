@@ -5,6 +5,7 @@
 #include <cstring>
 #include <unistd.h>
 #include "../../concurrency/inc/thread_pool.hpp"
+#include "../../logging/inc/logger.hpp"
 
 ClientSession::ClientSession(int client_fd) : client_fd_(client_fd) {}
 
@@ -16,8 +17,8 @@ void ClientSession::handle() {
     ssize_t bytes_received = recv(client_fd_, buffer, sizeof(buffer), 0);
 
     if (bytes_received > 0) {
-        
-        std::cout << ThreadPool::current_worker_id() << " received: \"" << buffer << "\"\n";
+
+        Logger::info(ThreadPool::current_worker_id(), " received: \"", buffer, "\"");
 
         send(client_fd_, buffer, bytes_received, 0);
     }
