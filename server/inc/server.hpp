@@ -12,21 +12,27 @@
 class Server {
 public:
     void start();
+    void update_events(int fd, uint32_t events);
 private:
     int setup_socket();
     int bind_socket();
     int start_listening();
     int setup_epoll();
 
-    void event_loop();
-
     void accept_connections();
-    void handle_client_event(int fd);
+    void handle_client_event(int fd, uint32_t events);
 
     void remove_session(int fd);
 
+    void event_loop();
+
+    void disable_epoll_out(int fd);
+    void enable_epoll_out(int fd);
+
     int server_fd_;
     int epoll_fd_;
+
+    std::unordered_map<int, uint32_t> fd_events_;
 
     int port_;
 
