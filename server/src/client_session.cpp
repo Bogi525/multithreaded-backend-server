@@ -19,14 +19,18 @@ bool ClientSession::handle_read() {
 
     ssize_t bytes_received = recv(client_fd_, buffer, sizeof(buffer), 0);
 
-    if (bytes_received <= 0) {
+    if (bytes_received < 0) {
         Logger::error("recv failed on fd ", client_fd_);
+        return false;
+    }
+    if (bytes_received == 0) {
+        Logger::info("Client ", client_fd_, " disconnected");
         return false;
     }
 
     read_buffer_.append(buffer, bytes_received);
 
-    Logger::info(ThreadPool::current_worker_id(), " received: \"", buffer, "\"");
+    Logger::info("Received: \"", std::string(buffer, bytes_received), "\"");
 
     queue_response(read_buffer_); // handle the data (right now just echo)
 
@@ -45,7 +49,7 @@ bool ClientSession::handle_write() {
         return false;
     }
 
-    Logger::info(ThreadPool::current_worker_id(), " sent: \"", std::string(write_buffer_, bytes_sent) , "\"");
+    Logger::info(ThreadPool::current_worker_id(), " sent: \"", std::string(write_buffer_.data(), bytes_sent) , "\"");
 
     write_buffer_.erase(0, bytes_sent);
 
@@ -53,5 +57,8 @@ bool ClientSession::handle_write() {
 }
 
 void ClientSession::close_session() {
-    close(client_fd_);
+    if (!closed_) {
+        close(client_fd_);
+        closed_ = true;
+    }
 }
