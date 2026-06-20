@@ -12,7 +12,6 @@
 class Server {
 public:
     void start();
-    void update_events(int fd, uint32_t events);
 private:
     int setup_socket();
     int bind_socket();
