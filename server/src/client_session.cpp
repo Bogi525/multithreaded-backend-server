@@ -1,6 +1,7 @@
 #include "../inc/client_session.hpp"
 
 #include <iostream>
+#include <string>
 #include <sys/socket.h>
 #include <cstring>
 #include <unistd.h>
@@ -9,19 +10,72 @@
 
 ClientSession::ClientSession(int client_fd) : client_fd_(client_fd) {}
 
-void ClientSession::handle() {
-    char buffer[1024];
+int ClientSession::fd() const {
+    return client_fd_;
+}
 
-    memset(buffer, 0, sizeof(buffer));
+bool ClientSession::write_empty() {
+    return write_buffer_.empty();
+}
 
-    ssize_t bytes_received = recv(client_fd_, buffer, sizeof(buffer), 0);
+void ClientSession::queue_response(std::string data) {
+    write_buffer_ += std::move(data);
+}
 
-    if (bytes_received > 0) {
+bool ClientSession::handle_read() {
+    char buffer[4096];
 
-        Logger::info(ThreadPool::current_worker_id(), " received: \"", buffer, "\"");
+    while(true) {
+        ssize_t bytes_received = recv(client_fd_, buffer, sizeof(buffer), 0);
+        if (bytes_received > 0) {
+            read_buffer_.append(buffer, bytes_received);
+        }
+        else if (bytes_received == 0) {
+            Logger::info("Client ", client_fd_, " disconnected");
+            return false;
+        }
+        else {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                break;
+            }
 
-        send(client_fd_, buffer, bytes_received, 0);
+            Logger::error("recv failed on fd ", client_fd_);
+            return false;
+        }
     }
 
-    close(client_fd_);
+    // handle the data (right now just echo)
+    queue_response(read_buffer_);
+    read_buffer_.clear();
+
+    return true;
+}
+
+bool ClientSession::handle_write() {
+    if (write_buffer_.empty()) return true;
+
+    while (!write_buffer_.empty()) {
+        ssize_t bytes_sent = send(client_fd_, write_buffer_.data(), write_buffer_.size(), 0);
+
+        if (bytes_sent > 0) {
+            write_buffer_.erase(0, bytes_sent);
+        }
+        else {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                break;
+            }
+
+            Logger::error("send failed on fd ", client_fd_);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void ClientSession::close_session() {
+    if (!closed_) {
+        close(client_fd_);
+        closed_ = true;
+    }
 }
