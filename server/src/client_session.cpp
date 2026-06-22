@@ -31,7 +31,7 @@ bool ClientSession::handle_read() {
             read_buffer_.append(buffer, bytes_received);
         }
         else if (bytes_received == 0) {
-            Logger::info("Client ", client_fd_, " disconnected");
+            Logger::info("Worker ", ThreadPool::current_worker_id(), ": Client ", client_fd_, " disconnected");
             return false;
         }
         else {

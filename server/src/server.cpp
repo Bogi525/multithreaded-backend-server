@@ -70,7 +70,7 @@ int Server::setup_socket() {
     server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
 
     if (server_fd_ < 0) {
-        std::cerr << "Socket creation failed.\n";
+        Logger::error("Socket creation failed.");
         return -1;
     }
 
@@ -88,11 +88,11 @@ int Server::bind_socket() {
     int opt = 1;
 
     if (setsockopt(server_fd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        perror("setsockopt failed");
+        Logger::error("setsockopt failed");
     }
 
     if (bind(server_fd_, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Bind failed");
+        Logger::error("Bind failed");
         close(server_fd_);
         return -1;
     }
@@ -146,9 +146,7 @@ void Server::accept_connections() {
         }
 
         set_non_blocking(client_fd);
-        fd_events_[client_fd] = EPOLLIN | EPOLLET;
-
-        Logger::info("Client connected.");
+        fd_events_[client_fd] = EPOLLIN | EPOLLET | EPOLLONESHOT;
 
         auto session = std::make_shared<ClientSession>(client_fd);
 
@@ -159,13 +157,48 @@ void Server::accept_connections() {
 
         epoll_event ev{};
 
-        ev.events = EPOLLIN | EPOLLET;
+        ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
         ev.data.fd = client_fd;
 
         epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, client_fd, &ev);
 
         Logger::info("Client connected. fd = ", client_fd);
     }
+}
+
+void Server::execute_worker_task(std::shared_ptr<ClientSession> session, uint32_t events) {
+    int fd = session->fd();
+
+    if (events & EPOLLIN) {
+        if (!session->handle_read()) {
+            remove_session(fd);
+            return;
+        }
+    }
+    
+    if (events & EPOLLOUT || !session->write_empty()) {
+        if (!session->handle_write()) {
+            remove_session(fd);
+            return;
+        }
+    }
+
+    if (events & (EPOLLERR | EPOLLRDHUP)) {
+        remove_session(fd);
+        return;
+    }
+
+    uint32_t next_events = EPOLLIN;
+    
+    if (!session->write_empty()) {
+        next_events |= EPOLLOUT;
+    }
+
+    epoll_event ev{};
+    ev.data.fd = fd;
+    ev.events = next_events | EPOLLET | EPOLLONESHOT;
+
+    epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &ev);
 }
 
 void Server::handle_client_event(int fd, uint32_t events) {
@@ -179,32 +212,9 @@ void Server::handle_client_event(int fd, uint32_t events) {
         session = it->second;
     }
 
-    if (events & EPOLLIN) {
-        if (!session->handle_read()) {
-            remove_session(fd);
-            return;
-        }
-        
-        if (!session->write_empty()) {
-        enable_epoll_out(fd);
-    }
-    }
-    
-    if (events & EPOLLOUT) {
-        if (!session->handle_write()) {
-            remove_session(fd);
-            return;
-        }
-    }
-
-    if (events & (EPOLLERR | EPOLLRDHUP)) {
-        remove_session(fd);
-        return;
-    }
-    
-    if (session->write_empty()) {
-        disable_epoll_out(fd);
-    }
+    thread_pool_.enqueue([this, session, events] () {
+        execute_worker_task(session, events);
+    });
 }
 
 void Server::remove_session(int fd) {

@@ -28,14 +28,14 @@ private:
     void disable_epoll_out(int fd);
     void enable_epoll_out(int fd);
 
+    void execute_worker_task(std::shared_ptr<ClientSession> session, uint32_t events);
+
     int server_fd_;
     int epoll_fd_;
 
     std::unordered_map<int, uint32_t> fd_events_;
 
     int port_;
-
-    std::vector<std::shared_ptr<ClientSession>> client_sessions_;
     
     std::unordered_map<int, std::shared_ptr<ClientSession>> sessions_;
     std::mutex sessions_mutex_;
