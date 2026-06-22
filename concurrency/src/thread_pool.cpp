@@ -1,6 +1,7 @@
 #include "../inc/thread_pool.hpp"
 
 #include <iostream>
+#include "../../logging/inc/logger.hpp"
 
 thread_local int ThreadPool::worker_id = -1;
 
@@ -13,7 +14,7 @@ ThreadPool::ThreadPool(size_t thread_count) {
         worker_threads_.emplace_back([this, i] () {
             worker_id = static_cast<int>(i);
 
-            std::cout << "Worker " << i << " started\n";
+            Logger::info("Worker ", i, " started");
 
             while (true) {
                 auto task = task_queue_.wait_and_pop();
