@@ -26,7 +26,7 @@ void Server::enable_epoll_out(int fd) {
 
     epoll_event ev{};
     ev.data.fd = fd;
-    ev.events = it->second;
+    ev.events = it->second | EPOLLET;
 
     epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &ev);
 }
@@ -39,7 +39,7 @@ void Server::disable_epoll_out(int fd) {
 
     epoll_event ev{};
     ev.data.fd = fd;
-    ev.events = it->second;
+    ev.events = it->second | EPOLLET;
 
     epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &ev);
 }
@@ -120,47 +120,52 @@ int Server::setup_epoll() {
 
     epoll_event ev{};
 
-    ev.events = EPOLLIN;
+    ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = server_fd_;
 
     return epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, server_fd_, &ev);
 }
 
 void Server::accept_connections() {
-    sockaddr_in client_addr;
-    socklen_t client_len = sizeof(client_addr);
-    
-    int client_fd = accept(
-        server_fd_,
-        (sockaddr*)&client_addr,
-        &client_len
-    );
+    while (true) {
+        sockaddr_in client_addr;
+        socklen_t client_len = sizeof(client_addr);
+        
+        int client_fd = accept(
+            server_fd_,
+            (sockaddr*)&client_addr,
+            &client_len
+        );
 
-    if (client_fd < 0) {
-        Logger::error("Accept failed.");
-        return;
+        if (client_fd < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                break;
+            }
+            Logger::error("Accept failed.");
+            break;
+        }
+
+        set_non_blocking(client_fd);
+        fd_events_[client_fd] = EPOLLIN | EPOLLET;
+
+        Logger::info("Client connected.");
+
+        auto session = std::make_shared<ClientSession>(client_fd);
+
+        {
+            std::lock_guard<std::mutex> lock(sessions_mutex_);
+            sessions_[client_fd] = session;
+        }
+
+        epoll_event ev{};
+
+        ev.events = EPOLLIN | EPOLLET;
+        ev.data.fd = client_fd;
+
+        epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, client_fd, &ev);
+
+        Logger::info("Client connected. fd = ", client_fd);
     }
-
-    set_non_blocking(client_fd);
-    fd_events_[client_fd] = EPOLLIN;
-
-    Logger::info("Client connected.");
-
-    auto session = std::make_shared<ClientSession>(client_fd);
-
-    {
-        std::lock_guard<std::mutex> lock(sessions_mutex_);
-        sessions_[client_fd] = session;
-    }
-
-    epoll_event ev{};
-
-    ev.events = EPOLLIN;
-    ev.data.fd = client_fd;
-
-    epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, client_fd, &ev);
-
-    Logger::info("Client connected. fd = ", client_fd);
 }
 
 void Server::handle_client_event(int fd, uint32_t events) {
