@@ -24,21 +24,13 @@ ThreadPool::ThreadPool(size_t thread_count) {
                 try {
                     task();
                 } catch (std::exception e) {
-                    std::cerr
-                        << "Worker "
-                        << current_worker_id()
-                        << " caught exception: "
-                        << e.what()
-                        << '\n';
+                    Logger::error("Worker ", current_worker_id, " caught exception: ", e.what());
                 } catch (...) {
-                    std::cerr
-                        << "Worker "
-                        << current_worker_id()
-                        << " caught unknown exception\n";
+                    Logger::error("Worker ", current_worker_id, " caught unknown exception");
                 }
             }
 
-            std::cout << "Worker " << i << " exiting\n";
+            Logger::info("Worker ", i, " exiting");
         });
     }
 }
