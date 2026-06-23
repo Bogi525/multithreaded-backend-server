@@ -18,32 +18,6 @@ void set_non_blocking(int fd) {
     fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
 
-void Server::enable_epoll_out(int fd) {
-    auto it = fd_events_.find(fd);
-    if (it == fd_events_.end()) return;
-
-    it->second |= EPOLLOUT;
-
-    epoll_event ev{};
-    ev.data.fd = fd;
-    ev.events = it->second | EPOLLET;
-
-    epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &ev);
-}
-
-void Server::disable_epoll_out(int fd) {
-    auto it = fd_events_.find(fd);
-    if (it == fd_events_.end()) return;
-
-    it->second &= ~EPOLLOUT;
-
-    epoll_event ev{};
-    ev.data.fd = fd;
-    ev.events = it->second | EPOLLET;
-
-    epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &ev);
-}
-
 void Server::start() {
     if (setup_socket() < 0) {
         return;
@@ -146,7 +120,6 @@ void Server::accept_connections() {
         }
 
         set_non_blocking(client_fd);
-        fd_events_[client_fd] = EPOLLIN | EPOLLET | EPOLLONESHOT;
 
         auto session = std::make_shared<ClientSession>(client_fd);
 
