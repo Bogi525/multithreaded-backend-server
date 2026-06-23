@@ -29,8 +29,10 @@ target_include_directories(server PRIVATE
 
 add_executable(client
     client/src/client.cpp
+    logging/src/logger.cpp
 )
 
 target_include_directories(client PRIVATE
     client/inc
+    logging/inc
 )

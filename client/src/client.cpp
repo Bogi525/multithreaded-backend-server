@@ -11,6 +11,8 @@
 #include <random>
 #include <chrono>
 
+#include "../../logging/inc/logger.hpp"
+
 void Client::send_message(int i) {
     static thread_local std::mt19937 rng(std::random_device{}());
 
@@ -52,7 +54,7 @@ void Client::send_message(int i) {
     int bytes_received = recv(server_fd, buffer, sizeof(buffer), 0);
 
     if (bytes_received > 0) {
-        std::cout << "Server echoed: " << buffer << '\n';
+        Logger::info("Server sent: ", std::string(buffer, bytes_received));
     }
 
     close(server_fd);
