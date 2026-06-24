@@ -45,6 +45,16 @@ bool ClientSession::handle_read() {
     }
 
     // handle the data (right now just echo)
+    Command cmd = parser.parse(read_buffer_);
+
+    Logger::info("Command parsed:");
+
+    Logger::info("Type = ", static_cast<int>(cmd.type));
+
+    for (const auto& arg : cmd.args) {
+        Logger::info("Arg = ", arg);
+    }
+
     queue_response(read_buffer_);
     read_buffer_.clear();
 
