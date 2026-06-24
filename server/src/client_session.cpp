@@ -8,7 +8,11 @@
 #include "../../concurrency/inc/thread_pool.hpp"
 #include "../../logging/inc/logger.hpp"
 
-ClientSession::ClientSession(int client_fd) : client_fd_(client_fd) {}
+ClientSession::ClientSession(int client_fd, Parser& parser, CommandDispatcher& command_dispatcher)
+    : client_fd_(client_fd),
+    parser_(parser),
+    dispatcher_(command_dispatcher)
+    {}
 
 int ClientSession::fd() const {
     return client_fd_;
@@ -45,17 +49,26 @@ bool ClientSession::handle_read() {
     }
 
     // handle the data (right now just echo)
-    Command cmd = parser.parse(read_buffer_);
+    Command cmd = parser_.parse(read_buffer_);
 
-    Logger::info("Command parsed:");
+    Logger::info(
+        "Parsed command type = ",
+        static_cast<int>(cmd.type)
+    );
 
-    Logger::info("Type = ", static_cast<int>(cmd.type));
-
-    for (const auto& arg : cmd.args) {
+    for (const auto& arg : cmd.args)
+    {
         Logger::info("Arg = ", arg);
     }
 
-    queue_response(read_buffer_);
+    Response response = dispatcher_.dispatch(cmd);
+
+    Logger::info(
+        "Response = ",
+        response.get_data()
+    );
+
+    queue_response(response.get_data());
     read_buffer_.clear();
 
     return true;

@@ -8,6 +8,7 @@
 class Parser {
 public:
     Command parse(std::string_view input);
+    
 private:
 };
 

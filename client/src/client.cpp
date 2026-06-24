@@ -112,6 +112,7 @@ int main()
     client.send_message("PING");
     client.send_message("GET username");
     client.send_message("SET username bogdan");
+    client.send_message("GET username");
     client.send_message("DEL username");
 
     return 0;

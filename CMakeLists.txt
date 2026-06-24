@@ -18,6 +18,8 @@ add_executable(server
     protocol/src/command.cpp
     protocol/src/parser.cpp
     protocol/src/response.cpp
+    dispatcher/src/command_dispatcher.cpp
+    storage/src/kv_store.cpp
 )
 
 target_include_directories(server PRIVATE
@@ -25,6 +27,8 @@ target_include_directories(server PRIVATE
     concurrency/inc
     logging/inc
     protocol/inc
+    dispatcher/inc
+    storage/inc
 )
 
 # =========================
