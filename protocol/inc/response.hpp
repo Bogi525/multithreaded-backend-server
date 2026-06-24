@@ -4,6 +4,11 @@
 #include <string>
 
 class Response {
+public:
+    Response(std::string msg);
+    std::string get_data();
+    
+private:
     std::string data;
 };
 
