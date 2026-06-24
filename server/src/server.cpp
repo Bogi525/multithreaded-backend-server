@@ -121,7 +121,7 @@ void Server::accept_connections() {
 
         set_non_blocking(client_fd);
 
-        auto session = std::make_shared<ClientSession>(client_fd);
+        auto session = std::make_shared<ClientSession>(client_fd, parser_, dispatcher_);
 
         {
             std::lock_guard<std::mutex> lock(sessions_mutex_);

@@ -5,10 +5,11 @@
 #include <sys/epoll.h>
 
 #include "../../protocol/inc/parser.hpp"
+#include "../../dispatcher/inc/command_dispatcher.hpp"
 
 class ClientSession {
 public:
-    ClientSession(int client_fd);
+    ClientSession(int client_fd, Parser& parser, CommandDispatcher& command_dispatcher);
 
     // Reads all currently available data from the socket.
     // Returns false if the connection should be closed.
@@ -25,7 +26,8 @@ public:
     bool write_empty();
 private:
     int client_fd_;
-    Parser parser;
+    Parser& parser_;
+    CommandDispatcher& dispatcher_;
 
     // Accumulates data received from the client.
     // Will later be consumed by the protocol parser.

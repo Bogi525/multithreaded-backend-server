@@ -54,6 +54,8 @@ private:
     std::mutex sessions_mutex_;
 
     ThreadPool thread_pool_ = ThreadPool(4);
+    Parser parser_;
+    CommandDispatcher dispatcher_;
 };
 
 #endif
