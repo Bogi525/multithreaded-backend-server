@@ -60,20 +60,59 @@ void Client::send_message(int i) {
     close(server_fd);
 }
 
-int main() {
-    std::vector<std::thread> threads;
+void Client::send_message(const std::string& message){
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-
-    for (int i = 0; i < 100; i++) {
-        threads.emplace_back([i] () {
-            Client client;
-            client.send_message(i);
-        });
+    if (server_fd < 0) {
+        std::cerr << "Socket creation failed.\n";
+        return;
     }
 
-    for (auto& t : threads) {
-        t.join();
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(8080);
+
+    inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
+
+    if (connect(server_fd,
+                (sockaddr*)&server_addr,
+                sizeof(server_addr)) < 0)
+    {
+        std::cerr << "Connection failed.\n";
+        close(server_fd);
+        return;
     }
+
+    send(
+        server_fd,
+        message.c_str(),
+        message.size(),
+        0
+    );
+
+    char buffer[1024]{};
+
+    int bytes_received =
+        recv(server_fd, buffer, sizeof(buffer), 0);
+
+    if (bytes_received > 0) {
+        std::cout
+            << "Response: "
+            << std::string(buffer, bytes_received)
+            << '\n';
+    }
+
+    close(server_fd);
+}
+
+int main()
+{
+    Client client;
+
+    client.send_message("PING");
+    client.send_message("GET username");
+    client.send_message("SET username bogdan");
+    client.send_message("DEL username");
 
     return 0;
 }

@@ -15,12 +15,16 @@ add_executable(server
     concurrency/src/task_queue.cpp
     concurrency/src/thread_pool.cpp
     logging/src/logger.cpp
+    protocol/src/command.cpp
+    protocol/src/parser.cpp
+    protocol/src/response.cpp
 )
 
 target_include_directories(server PRIVATE
     server/inc
     concurrency/inc
     logging/inc
+    protocol/inc
 )
 
 # =========================

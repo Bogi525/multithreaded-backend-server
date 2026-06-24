@@ -4,6 +4,8 @@
 #include <string>
 #include <sys/epoll.h>
 
+#include "../../protocol/inc/parser.hpp"
+
 class ClientSession {
 public:
     ClientSession(int client_fd);
@@ -23,6 +25,7 @@ public:
     bool write_empty();
 private:
     int client_fd_;
+    Parser parser;
 
     // Accumulates data received from the client.
     // Will later be consumed by the protocol parser.
