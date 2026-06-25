@@ -4,7 +4,12 @@
 
 class Client {
 public:
-    void send_message(int i);
-    void send_message(const std::string& message);
+    Client() = default;
+    ~Client();
+
+    bool connect();
+    void send(const std::string& message);
+    void disconnect();
 private:
+    int server_fd_ = -1;
 };
