@@ -1,6 +1,18 @@
 #include "../inc/command_dispatcher.hpp"
+#include "../../server/inc/client_session.hpp"
 
-Response CommandDispatcher::dispatch(const Command& cmd) {
+bool CommandDispatcher::is_authenticated_required(CommandType type) {
+    return type == CommandType::GET ||
+           type == CommandType::SET ||
+           type == CommandType::DEL;
+}
+
+Response CommandDispatcher::dispatch(const Command& cmd, ClientSession& session) {
+    if (is_authenticated_required(cmd.type) &&
+        !session.authenticated()) {
+        return {"ERROR: AUTH REQUIRED"};
+    }
+
     switch (cmd.type) {
     case CommandType::PING:
         return {"PONG"};
@@ -39,6 +51,26 @@ Response CommandDispatcher::dispatch(const Command& cmd) {
             kv_store_.erase(cmd.args[0]);
 
             return {"OK"};
+        }
+    case CommandType::AUTH:
+        {
+            if (cmd.args.size() != 2) {
+                return {"ERROR: AUTH requires 2 arguments"};
+            }
+
+            auto it = user_store_.find(cmd.args[0]);
+
+            if (it == user_store_.end()) {
+                return {"INVALID CREDENTIALS"};
+            }
+
+            if (it->second != cmd.args[1]) {
+                return {"INVALID CREDENTIALS"};
+            }
+
+            session.authenticate(cmd.args[0]);
+
+            return {"AUTH OK"};
         }
     default:
         {

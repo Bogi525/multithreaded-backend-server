@@ -24,10 +24,21 @@ public:
     int fd() const;
 
     bool write_empty();
+
+    // Authentication related methods
+    bool authenticated() const;
+    void authenticate(const std::string& username);
+    const std::string& username() const;
 private:
     int client_fd_;
+
+    // Needed for command parsing and execution
     Parser& parser_;
     CommandDispatcher& dispatcher_;
+
+    // Logged in user
+    bool authenticated_ = false;
+    std::string username_;
 
     // Accumulates data received from the client.
     // Will later be consumed by the protocol parser.

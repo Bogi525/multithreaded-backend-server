@@ -35,6 +35,8 @@ Command Parser::parse(std::string_view input) {
         command.type = CommandType::SET;
     } else if (tokens[0] == "DEL") {
         command.type = CommandType::DEL;
+    } else if (tokens[0] == "AUTH") {
+        command.type = CommandType::AUTH;
     } else {
         command.type = CommandType::UNKNOWN;
     }

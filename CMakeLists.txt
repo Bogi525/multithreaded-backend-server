@@ -20,6 +20,7 @@ add_executable(server
     protocol/src/response.cpp
     dispatcher/src/command_dispatcher.cpp
     storage/src/kv_store.cpp
+    storage/src/user_store.cpp
 )
 
 target_include_directories(server PRIVATE

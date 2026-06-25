@@ -61,7 +61,7 @@ bool ClientSession::handle_read() {
         Logger::info("Arg = ", arg);
     }
 
-    Response response = dispatcher_.dispatch(cmd);
+    Response response = dispatcher_.dispatch(cmd, *this);
 
     Logger::info(
         "Response = ",
@@ -101,4 +101,17 @@ void ClientSession::close_session() {
         close(client_fd_);
         closed_ = true;
     }
+}
+
+bool ClientSession::authenticated() const {
+    return authenticated_;
+}
+
+void ClientSession::authenticate(const std::string& username) {
+    authenticated_ = true;
+    username_ = username;
+}
+
+const std::string& ClientSession::username() const {
+    return username_;
 }
