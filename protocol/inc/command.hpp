@@ -9,7 +9,8 @@ enum class CommandType {
     PING,
     GET,
     SET,
-    DEL
+    DEL,
+    AUTH
 };
 
 struct Command {
