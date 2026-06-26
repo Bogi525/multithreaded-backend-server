@@ -23,11 +23,11 @@ Response CommandDispatcher::dispatch(const Command& cmd, ClientSession& session)
                 return {"ERROR: GET requires 1 argument"};
             }
 
-            if (!kv_store_.exists(cmd.args[0])) {
-                return {"NOT FOUND"};
-            }
+            std::optional<std::string> opt = kv_store_.get(cmd.args[0]);
 
-            return {kv_store_.get(cmd.args[0])};
+            if (opt == std::nullopt) return {"NOT FOUND"};
+
+            return {*opt};
         }
     case CommandType::SET:
         {
