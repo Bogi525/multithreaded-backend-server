@@ -1,5 +1,6 @@
 #include "../inc/command_dispatcher.hpp"
 #include "../../server/inc/client_session.hpp"
+#include "../../auth/inc/password_hasher.hpp"
 
 bool CommandDispatcher::is_authenticated_required(CommandType type) {
     return type == CommandType::GET ||
@@ -64,7 +65,7 @@ Response CommandDispatcher::dispatch(const Command& cmd, ClientSession& session)
                 return {"INVALID CREDENTIALS"};
             }
 
-            if (it->second != cmd.args[1]) {
+            if (it->second != PasswordHasher::hash(cmd.args[1])) {
                 return {"INVALID CREDENTIALS"};
             }
 

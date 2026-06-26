@@ -5,6 +5,8 @@ project(TcpServer)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(OpenSSL REQUIRED)
+
 # =========================
 # Server executable
 # =========================
@@ -21,6 +23,7 @@ add_executable(server
     dispatcher/src/command_dispatcher.cpp
     storage/src/kv_store.cpp
     storage/src/user_store.cpp
+    auth/src/password_hasher.cpp
 )
 
 target_include_directories(server PRIVATE
@@ -30,7 +33,10 @@ target_include_directories(server PRIVATE
     protocol/inc
     dispatcher/inc
     storage/inc
+    auth/inc
 )
+
+target_link_libraries(server PRIVATE OpenSSL::Crypto)
 
 # =========================
 # Client executable
