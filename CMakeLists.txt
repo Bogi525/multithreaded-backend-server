@@ -8,14 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
 
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/data)
-
-configure_file(
-    ${CMAKE_SOURCE_DIR}/data/users.db
-    ${CMAKE_BINARY_DIR}/data/users.db
-    COPYONLY
-)
-
 # =========================
 # Server executable
 # =========================
@@ -43,11 +35,18 @@ target_include_directories(server PRIVATE
     dispatcher/inc
     storage/inc
     auth/inc
+    config/inc
 )
 
 target_link_libraries(server PRIVATE OpenSSL::Crypto)
 
 target_link_libraries(server PRIVATE SQLite::SQLite3)
+
+target_compile_definitions(server PRIVATE
+    DATA_DIR="${CMAKE_SOURCE_DIR}/data"
+)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # =========================
 # Client executable

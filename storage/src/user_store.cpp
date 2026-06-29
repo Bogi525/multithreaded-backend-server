@@ -2,9 +2,11 @@
 
 #include <stdexcept>
 #include "../../logging/inc/logger.hpp"
+#include "../../config/inc/config.hpp"
 
 UserStore::UserStore () {
-    if (sqlite3_open("data/users.db", &db_) != SQLITE_OK) {
+    std::string path = std::string(DATA_DIR) + "/users.db";
+    if (sqlite3_open(path.c_str(), &db_) != SQLITE_OK) {
         throw std::runtime_error("Failed to open users.db");
     }
 }
