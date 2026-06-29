@@ -221,8 +221,13 @@ void Server::event_loop() {
 }
 
 int main() {
-    Server server;
-    server.start();
+    try {
+        Server server;
+        server.start();
+    }
+    catch (const std::exception& e) {
+        Logger::error("Server startup failed: ", e.what());
+    }
     std::cin;
     return 0;
 }
