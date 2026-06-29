@@ -10,7 +10,8 @@ enum class CommandType {
     GET,
     SET,
     DEL,
-    AUTH
+    AUTH,
+    REGISTER
 };
 
 struct Command {
