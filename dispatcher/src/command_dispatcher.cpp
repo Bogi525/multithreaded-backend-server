@@ -1,5 +1,6 @@
 #include "../inc/command_dispatcher.hpp"
 #include "../../server/inc/client_session.hpp"
+#include "../../auth/inc/password_hasher.hpp"
 
 bool CommandDispatcher::is_authenticated_required(CommandType type) {
     return type == CommandType::GET ||
@@ -52,19 +53,31 @@ Response CommandDispatcher::dispatch(const Command& cmd, ClientSession& session)
 
             return {"OK"};
         }
+    case CommandType::REGISTER:
+        {
+            if (cmd.args.size() != 2) {
+                return {"ERROR: REGISTER requires 2 arguments"};
+            }
+
+            bool success  = user_store_.register_user(cmd.args[0], cmd.args[1]);
+
+            if (!success ) {
+                return {"ERROR: USER ALREADY EXISTS"};
+            }
+
+            session.authenticate(cmd.args[0]);
+            
+            return {"REGISTERED"};
+        }
     case CommandType::AUTH:
         {
             if (cmd.args.size() != 2) {
                 return {"ERROR: AUTH requires 2 arguments"};
             }
 
-            auto it = user_store_.find(cmd.args[0]);
+            bool authenticated = user_store_.authenticate(cmd.args[0], cmd.args[1]);
 
-            if (it == user_store_.end()) {
-                return {"INVALID CREDENTIALS"};
-            }
-
-            if (it->second != cmd.args[1]) {
+            if (!authenticated) {
                 return {"INVALID CREDENTIALS"};
             }
 
