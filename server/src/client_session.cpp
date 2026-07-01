@@ -23,7 +23,7 @@ bool ClientSession::write_empty() {
 }
 
 void ClientSession::queue_response(std::string data) {
-    write_buffer_ += std::move(data);
+    write_buffer_ += std::move(data + '\n');
 }
 
 bool ClientSession::handle_read() {
@@ -31,14 +31,20 @@ bool ClientSession::handle_read() {
 
     while(true) {
         ssize_t bytes_received = recv(client_fd_, buffer, sizeof(buffer), 0);
+        
         if (bytes_received > 0) {
             read_buffer_.append(buffer, bytes_received);
-        }
-        else if (bytes_received == 0) {
-            Logger::info("Worker ", ThreadPool::current_worker_id(), ": Client ", client_fd_, " disconnected");
+        } else if (bytes_received == 0) {
+            Logger::info(
+                "Worker ",
+                ThreadPool::current_worker_id(),
+                ": Client ",
+                client_fd_,
+                " disconnected"
+            );
+
             return false;
-        }
-        else {
+        } else {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 break;
             }
@@ -48,23 +54,45 @@ bool ClientSession::handle_read() {
         }
     }
 
-    // Handle the data
-    Command cmd = parser_.parse(read_buffer_);
-
-    Logger::info("Parsed command type = ", static_cast<int>(cmd.type));
-
-    for (const auto& arg : cmd.args) {
-        Logger::info("Arg = ", arg);
-    }
-
-    Response response = dispatcher_.dispatch(cmd, *this);
-
-    Logger::info("Response = ", response.get_data());
-
-    queue_response(response.get_data());
-    read_buffer_.clear();
+    process_commands();
 
     return true;
+}
+
+void ClientSession::process_commands() {
+    while (true) {
+        size_t newline = read_buffer_.find('\n');
+
+        if (newline == std::string::npos) {
+            break;
+        }
+
+        std::string line = read_buffer_.substr(0, newline);
+
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+
+        read_buffer_.erase(0, newline + 1);
+
+        if (line.empty()) {
+            continue;
+        }
+
+        Command cmd = parser_.parse(line);
+
+        Logger::info("Parsed command type = ", static_cast<int>(cmd.type));
+
+        for (const auto& arg : cmd.args) {
+            Logger::info("Arg = ", arg);
+        }
+
+        Response response = dispatcher_.dispatch(cmd, *this);
+
+        Logger::info("Response = ", response.get_data());
+
+        queue_response(response.get_data());
+    }
 }
 
 bool ClientSession::handle_write() {
@@ -75,8 +103,7 @@ bool ClientSession::handle_write() {
 
         if (bytes_sent > 0) {
             write_buffer_.erase(0, bytes_sent);
-        }
-        else {
+        } else {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 break;
             }

@@ -52,6 +52,8 @@ private:
     bool closed_ = false;
 
     void queue_response(std::string data);
+
+    void process_commands();
 };
 
 #endif

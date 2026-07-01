@@ -56,29 +56,55 @@ void Client::send(const std::string& message) {
         return;
     }
 
-    ::send(
+    ssize_t bytes_sent = ::send(
         server_fd_,
         message.c_str(),
         message.size(),
         0
     );
 
+    if (bytes_sent <= 0) {
+        Logger::error("Failed to send message");
+        return;
+    }
+
+    std::string response;
     char buffer[1024]{};
 
-    int bytes_received =
-        recv(
-            server_fd_,
-            buffer,
-            sizeof(buffer),
-            0
-        );
+    while (true) {
+        int bytes_received =
+            recv(
+                server_fd_,
+                buffer,
+                sizeof(buffer),
+                0
+            );
 
-    if (bytes_received > 0) {
-        std::cout
-            << "Response: "
-            << std::string(buffer, bytes_received)
-            << '\n';
+        if (bytes_received == 0) {
+            Logger::info("Server disconnected");
+            disconnect();
+            return;
+        }
+
+        if (bytes_received < 0) {
+            Logger::error("recv() failed");
+            return;
+        }
+
+        response.append(buffer, bytes_received);
+
+        size_t newline = response.find('\n');
+
+        if (newline != std::string::npos) {
+            response.erase(newline);
+            break;
+        }
     }
+    
+    Logger::info(
+        "Response: ",
+        response
+    );
 }
 
 void Client::disconnect() {
@@ -88,8 +114,11 @@ void Client::disconnect() {
     }
 }
 
-int main()
-{
+int Client::is_connected() {
+    return server_fd_ >= 0;
+}
+
+int main() {
     Client client;
 
     if (!client.connect()) {
@@ -98,7 +127,7 @@ int main()
 
     std::string input;
 
-    while (true) {
+    while (client.is_connected()) {
         std::cout << "> ";
         std::getline(std::cin, input);
 
@@ -110,7 +139,7 @@ int main()
             continue;
         }
 
-        client.send(input);
+        client.send(input + '\n');
     }
 
     client.disconnect();
